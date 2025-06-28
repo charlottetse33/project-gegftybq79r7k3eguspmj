@@ -4,20 +4,20 @@ import { useFlowchartGenerator } from '@/hooks/useFlowchartGenerator';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Wand2, Copy, Download, RefreshCw } from 'lucide-react';
+import { Wand2, Copy, Download, RefreshCw, Info } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const FlowchartBuilder: React.FC = () => {
   const [description, setDescription] = useState('');
   const [mermaidCode, setMermaidCode] = useState('');
-  const { generateFlowchart, isGenerating, error, clearError } = useFlowchartGenerator();
+  const { generateFlowchart, isGenerating, error, detectedDiagramType, clearError } = useFlowchartGenerator();
   const { toast } = useToast();
 
   const handleGenerate = async () => {
     if (!description.trim()) {
       toast({
         title: "Description Required",
-        description: "Please enter a description for your flowchart",
+        description: "Please enter a description for your diagram",
         variant: "destructive"
       });
       return;
@@ -28,13 +28,13 @@ export const FlowchartBuilder: React.FC = () => {
       const generatedCode = await generateFlowchart(description);
       setMermaidCode(generatedCode);
       toast({
-        title: "Flowchart Generated!",
-        description: "Your flowchart has been created successfully"
+        title: "Diagram Generated!",
+        description: `Your ${detectedDiagramType.toLowerCase()} has been created successfully`
       });
     } catch (err) {
       toast({
         title: "Generation Failed",
-        description: err instanceof Error ? err.message : "Failed to generate flowchart",
+        description: err instanceof Error ? err.message : "Failed to generate diagram",
         variant: "destructive"
       });
     }
@@ -65,7 +65,7 @@ export const FlowchartBuilder: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'flowchart.mmd';
+    a.download = 'diagram.mmd';
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -73,15 +73,43 @@ export const FlowchartBuilder: React.FC = () => {
     
     toast({
       title: "Downloaded!",
-      description: "Flowchart saved as flowchart.mmd"
+      description: "Diagram saved as diagram.mmd"
     });
   };
 
   const exampleDescriptions = [
-    "User login process with authentication and error handling",
-    "E-commerce checkout flow from cart to payment confirmation",
-    "Software development lifecycle from planning to deployment",
-    "Customer support ticket resolution process"
+    {
+      category: "Database & ER Diagrams",
+      examples: [
+        "E-commerce database with users, products, orders, and reviews",
+        "Library management system with books, authors, members, and borrowing records",
+        "Social media platform with users, posts, comments, and likes"
+      ]
+    },
+    {
+      category: "Process Flows",
+      examples: [
+        "User login process with authentication and error handling",
+        "E-commerce checkout flow from cart to payment confirmation",
+        "Customer support ticket resolution process"
+      ]
+    },
+    {
+      category: "System Interactions",
+      examples: [
+        "API authentication flow between client, server, and database",
+        "Microservices communication for order processing",
+        "User registration with email verification sequence"
+      ]
+    },
+    {
+      category: "Class Structures",
+      examples: [
+        "Object-oriented design for a vehicle management system",
+        "Class hierarchy for a game with different character types",
+        "MVC architecture with models, views, and controllers"
+      ]
+    }
   ];
 
   return (
@@ -90,11 +118,15 @@ export const FlowchartBuilder: React.FC = () => {
         {/* Header */}
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold text-gray-900 mb-2">
-            AI Flowchart Builder
+            AI Diagram Builder
           </h1>
           <p className="text-lg text-gray-600">
-            Describe your process and let AI create beautiful flowcharts for you
+            Describe any system, process, or structure and let AI create the perfect diagram for you
           </p>
+          <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-500">
+            <Info className="w-4 h-4" />
+            <span>Supports ER diagrams, flowcharts, sequence diagrams, class diagrams, and more</span>
+          </div>
         </div>
 
         {/* Main Content */}
@@ -104,13 +136,13 @@ export const FlowchartBuilder: React.FC = () => {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Wand2 className="w-5 h-5 text-blue-600" />
-                Describe Your Process
+                Describe Your System or Process
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
                 <Textarea
-                  placeholder="Describe the process you want to visualize as a flowchart. For example: 'User registration process with email verification and profile setup'"
+                  placeholder="Describe what you want to visualize. For example: 'Database schema for a blog with users, posts, and comments' or 'User authentication flow with OAuth'"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   className="min-h-32 resize-none"
@@ -131,7 +163,7 @@ export const FlowchartBuilder: React.FC = () => {
                 ) : (
                   <>
                     <Wand2 className="w-4 h-4 mr-2" />
-                    Generate Flowchart
+                    Generate Diagram
                   </>
                 )}
               </Button>
@@ -143,17 +175,26 @@ export const FlowchartBuilder: React.FC = () => {
               )}
 
               {/* Example Descriptions */}
-              <div className="space-y-2">
+              <div className="space-y-4">
                 <p className="text-sm font-medium text-gray-700">Try these examples:</p>
-                <div className="space-y-1">
-                  {exampleDescriptions.map((example, index) => (
-                    <button
-                      key={index}
-                      onClick={() => setDescription(example)}
-                      className="text-left text-sm text-blue-600 hover:text-blue-800 hover:underline block w-full"
-                    >
-                      • {example}
-                    </button>
+                <div className="space-y-3">
+                  {exampleDescriptions.map((category, categoryIndex) => (
+                    <div key={categoryIndex} className="space-y-2">
+                      <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                        {category.category}
+                      </p>
+                      <div className="space-y-1">
+                        {category.examples.map((example, index) => (
+                          <button
+                            key={index}
+                            onClick={() => setDescription(example)}
+                            className="text-left text-sm text-blue-600 hover:text-blue-800 hover:underline block w-full"
+                          >
+                            • {example}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               </div>
@@ -165,7 +206,12 @@ export const FlowchartBuilder: React.FC = () => {
             <CardHeader>
               <div className="flex items-center justify-between">
                 <CardTitle className="flex items-center gap-2">
-                  Flowchart Preview
+                  Diagram Preview
+                  {detectedDiagramType && (
+                    <span className="text-sm font-normal text-blue-600 bg-blue-50 px-2 py-1 rounded">
+                      {detectedDiagramType}
+                    </span>
+                  )}
                 </CardTitle>
                 {mermaidCode && (
                   <div className="flex gap-2">
